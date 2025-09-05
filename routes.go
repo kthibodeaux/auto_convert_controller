@@ -75,7 +75,7 @@ func deleteLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
@@ -106,6 +106,6 @@ func updateLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
