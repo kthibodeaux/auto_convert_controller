@@ -1,0 +1,7 @@
+services:
+  web:
+    build:
+      context: .
+    ports:
+      - 8998:8080
+    restart: always
