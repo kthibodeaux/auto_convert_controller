@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -17,7 +17,7 @@ func locksHandler(lockRepo *LockRepo) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		jsonBytes, err := json.Marshal(lockRepo.locks)
 		if err != nil {
-			log.Println(err.Error())
+			slog.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -29,7 +29,7 @@ func createLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			log.Println(err.Error())
+			slog.Error(err.Error())
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
@@ -37,11 +37,11 @@ func createLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 		lock := NewLock(req.Hostname, req.Filename, req.State)
 		err := lockRepo.add(lock)
 		if err != nil {
-			log.Println(err.Error())
 			switch err {
 			case ErrLockExists:
 				http.Error(w, err.Error(), http.StatusConflict)
 			default:
+				slog.Error(err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
@@ -55,7 +55,7 @@ func deleteLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			log.Println(err.Error())
+			slog.Error(err.Error())
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
@@ -63,13 +63,13 @@ func deleteLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 		lock := lockRepo.find(req.Filename)
 		err := lockRepo.remove(req.Hostname, lock)
 		if err != nil {
-			log.Println(err.Error())
 			switch err {
 			case ErrNotOwner:
 				http.Error(w, err.Error(), http.StatusForbidden)
 			case ErrNotFound:
 				http.Error(w, err.Error(), http.StatusNotFound)
 			default:
+				slog.Error(err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
@@ -83,7 +83,7 @@ func updateLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req Request
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			log.Println(err.Error())
+			slog.Error(err.Error())
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
@@ -96,11 +96,11 @@ func updateLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 
 		err := lockRepo.update(req.Hostname, req.State, lock)
 		if err != nil {
-			log.Println(err.Error())
 			switch err {
 			case ErrNotOwner:
 				http.Error(w, err.Error(), http.StatusForbidden)
 			default:
+				slog.Error(err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return

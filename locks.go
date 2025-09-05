@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"log"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -37,16 +37,16 @@ func NewLock(hostname string, filename string, state string) *Lock {
 }
 
 func (lr *LockRepo) find(filename string) *Lock {
-	log.Println("Finding lock for filename:", filename)
+	slog.Info("Looking for lock", "filename", filename)
 
 	for _, lock := range lr.locks {
 		if lock.Filename == filename {
-			log.Println("Found lock for filename:", filename, "; host:", lock.Hostname)
+			slog.Info("Found lock", "filename", filename, "host", lock.Hostname)
 			return lock
 		}
 	}
 
-	log.Println("Could not find lock for filename:", filename)
+	slog.Warn("Could not find lock", "filename", filename)
 	return nil
 }
 
@@ -60,7 +60,7 @@ func (lr *LockRepo) add(lock *Lock) error {
 	}
 
 	lr.locks = append(lr.locks, lock)
-	log.Println("Created lock for filename:", lock.Filename, "; host:", lock.Hostname)
+	slog.Info("Created lock", "filename", lock.Filename, "host", lock.Hostname)
 	return nil
 }
 
@@ -71,12 +71,12 @@ func (lr *LockRepo) remove(hostname string, lock *Lock) error {
 	for i, l := range lr.locks {
 		if l == lock {
 			if l.Hostname != hostname {
-				log.Println("Host attempted to remove lock for filename:", l.Filename, "; host:", hostname, "; actual host:", lock.Hostname)
+				slog.Warn("Host attempted to remove lock", "filename", l.Filename, "host", hostname, "actual_host", lock.Hostname)
 				return ErrNotOwner
 			}
 
 			lr.locks = append(lr.locks[:i], lr.locks[i+1:]...)
-			log.Println("Removed lock for filename:", lock.Filename, "; host:", lock.Hostname)
+			slog.Info("Removed lock", "filename", lock.Filename, "host", lock.Hostname)
 			return nil
 		}
 	}
@@ -89,13 +89,13 @@ func (lr *LockRepo) update(hostname string, state string, lock *Lock) error {
 	defer lr.mu.Unlock()
 
 	if lock.Hostname != hostname {
-		log.Println("Host attempted to update lock for filename:", lock.Filename, "; host:", hostname, "; actual host:", lock.Hostname)
+		slog.Warn("Host attempted to update lock", "filename", lock.Filename, "host", hostname, "actual_host", lock.Hostname)
 		return ErrNotOwner
 	}
 
 	lock.State = state
 	lock.UpdatedAt = time.Now()
-	log.Println("Updated lock for filename:", lock.Filename, "; state:", state, "; host:", lock.Hostname)
+	slog.Info("Updated lock", "filename", lock.Filename, "host", lock.Hostname, "state", state)
 
 	return nil
 }
