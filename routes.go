@@ -79,6 +79,34 @@ func deleteLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 	}
 }
 
+func deleteAllLocksHandler(lockRepo *LockRepo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req Request
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			slog.Error(err.Error())
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		var locksToRemove []*Lock
+		for _, lock := range lockRepo.locks {
+			if lock.Hostname == req.Hostname {
+				locksToRemove = append(locksToRemove, lock)
+			}
+		}
+
+		for _, lock := range locksToRemove {
+			err := lockRepo.remove(req.Hostname, lock)
+			if err != nil {
+				slog.Error(err.Error())
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 func updateLockHandler(lockRepo *LockRepo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req Request

@@ -10,6 +10,7 @@ func main() {
 	http.HandleFunc("GET /locks", locksHandler(lockRepo))
 	http.HandleFunc("POST /locks", createLockHandler(lockRepo))
 	http.HandleFunc("DELETE /lock", deleteLockHandler(lockRepo))
+	http.HandleFunc("DELETE /locks", deleteAllLocksHandler(lockRepo))
 	http.HandleFunc("PUT /lock", updateLockHandler(lockRepo))
 
 	http.ListenAndServe(":8080", nil)
